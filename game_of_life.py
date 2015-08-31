@@ -1,29 +1,8 @@
-u"""
-Rules.
-
-The universe of the Game of Life is an infinite two-dimensional orthogonal
-grid of square cells, each of which is in one of two possible states, alive
-or dead. Every cell interacts with its eight neighbours, which are the cells
-that are horizontally, vertically, or diagonally adjacent. At each step in
-time, the following transitions occur:
-
-Any live cell with fewer than two live neighbours dies,
-as if caused byunder-population.
-Any live cell with two or three live neighbours lives
-on to the next generation.
-Any live cell with more than three live neighbours dies, as if by overcrowding.
-Any dead cell with exactly three live neighbours becomes a live cell,
-as if by reproduction.
-
-The initial pattern constitutes the seed of the system. The first generation
-is created by applying the above rules simultaneously to every cell in the
-seed-births and deaths occur simultaneously, and the discrete moment at which
-this happens is sometimes called a tick (in other words, each generation is
-a pure function of the preceding one). The rules continue to be applied
-repeatedly to create further generations.
-"""
+"""Conway's game of life simulation."""
 import numpy as np
 from copy import deepcopy
+from math import floor
+import os
 
 
 class Game(object):
@@ -37,6 +16,8 @@ class Game(object):
         self.on = 1
         self.off = 0
         self.opts = [self.on, self.off]
+        self.symbols = {0: ' .', 1: ' o'}
+        self.parallel_symbols = {0: '.', 1: 'o'}
         if kwargs.get('state', 0):
             self.state = self.validate_state(kwargs['state'])
         else:
@@ -70,9 +51,9 @@ class Game(object):
             "bottom_right": (row + 1, col + 1)
         }
         for r, c in indices.values():
-            if 0 <= r < self.height and 0 <= c < self.width\
-                    and self.state[r][c]:
-                neighbors += 1
+            if 0 <= r < self.width and 0 <= c < self.height:
+                if self.state[r][c]:
+                    neighbors += 1
         return neighbors
 
     def is_cell_alive(self, row, col):
@@ -93,22 +74,19 @@ class Game(object):
         state = ""
         for row in range(self.height):
             for col in range(self.width):
-                if self.state[row][col]:
-                    state += ' x'
-                else:
-                    state += ' .'
+                state += self.symbols[self.state[col][row]]
             state += "\n"
         print(state)
 
     def process_step(self):
         """Process a single step and return the new board."""
-        for row in range(self.height):
-            for col in range(self.width):
+        for row in range(self.width):
+            for col in range(self.height):
                 self.temp_state[row][col] = self.is_cell_alive(row, col)
         return self.temp_state
 
     def process_steps(self, num):
-        """Process n steps in the game."""
+        """Process n steps in the game. Display steps one by one."""
         print("\nInitial board state\n""")
         self.display_state()
 
@@ -117,6 +95,31 @@ class Game(object):
 
             print("\nStep: {} of {}.\n".format(step + 1, num))
             self.display_state()
+
+    def process_steps_and_save_states(self, num):
+        """Process n steps and save state to display all steps in a grid."""
+        states = []
+        width = map(int, os.popen('stty size', 'r').read().split())[1]
+        grids_per_block = int(floor(width / (self.width * 2 + 6)))
+
+        for step in range(num):
+            self.state = deepcopy(self.process_step())
+            states.append(self.state)
+
+        states = np.array(states)
+        grids = states.shape[0]
+
+        print("\nPrinting %s grids. Progress is horizontal ----> \n" % grids)
+        for start in range(0, grids, grids_per_block):
+            end = start + grids_per_block
+            end = end if end < grids else grids
+            for row in range(self.height):
+                for m in range(start, end):
+                    for col in range(self.width):
+                        print(self.parallel_symbols[states[m][col][row]]),
+                    print("\t"),
+                print("")
+            print("\n")
 
 
 # --------------------------------------------------------------------------- #
@@ -203,6 +206,8 @@ def test_example_patterns(name):
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ]
         steps = 9
+    else:
+        return
 
     width = len(state[0])
     height = len(state)
@@ -212,5 +217,6 @@ def test_example_patterns(name):
 
 
 if __name__ == '__main__':
-    g = Game(width=10, height=10)
-    g.process_steps(5)
+    g = Game(width=15, height=30)
+    #g.process_steps(5)
+    g.process_steps_and_save_states(5)
