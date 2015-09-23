@@ -217,6 +217,6 @@ def test_example_patterns(name):
 
 
 if __name__ == '__main__':
-    g = Game(width=15, height=30)
+    g = Game(width=10, height=20)
     #g.process_steps(5)
-    g.process_steps_and_save_states(5)
+    g.process_steps_and_save_states(14)
