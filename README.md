@@ -21,3 +21,5 @@ seed-births and deaths occur simultaneously, and the discrete moment at which
 this happens is sometimes called a tick (in other words, each generation is
 a pure function of the preceding one). The rules continue to be applied
 repeatedly to create further generations.
+
+![Embed Wall](images/screenshot.png)
